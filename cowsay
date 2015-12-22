@@ -1,4 +1,4 @@
-#%BANGPERL%
+#!/usr/bin/perl
 
 ##
 ## Cowsay 3.03
@@ -11,12 +11,14 @@ use Text::Wrap qw(wrap fill $columns);
 use File::Basename;
 use Getopt::Std;
 use Cwd;
+use POSIX;
+use Encode;
 
 $version = "3.03";
 $progname = basename($0);
 $eyes = "oo";
 $tongue = "  ";
-$cowpath = $ENV{'COWPATH'} || '%PREFIX%/share/cows';
+$cowpath = $ENV{'COWPATH'} || '/usr/local/Cellar/cowsay/3.03/share/cows';
 @message = ();
 $thoughts = "";
 
@@ -103,16 +105,30 @@ sub maxlength {
     my ($l, $m);
     $m = -1;
     for my $i (@_) {
-	$l = length $i;
+    $l = length (Encode::decode_utf8($i));
+    my $l2 = length $i;
+    $l = ($l + $l2)/2;
+    $l = floor($l);
 	$m = $l if ($l > $m);
     }
     return $m;
 }
 
+sub get_balloon_line {
+    my($border_open, $msg, $border_close, $max) = @_;
+    my($l, $l2, $delta);
+    $l = length (Encode::decode_utf8($msg));
+    $l2 = length $msg;
+    $l = ($l + $l2)/2;
+    $l = floor($l);
+    $delta = $max - $l;
+    $msg = $border_open . $msg . (" " x $delta) . $border_close . "\n";
+    return $msg;
+}
+
 sub construct_balloon {
     my $max = &maxlength(@message);
-    my $max2 = $max + 2;	## border space fudge.
-    my $format = "%s %-${max}s %s\n";
+    my $max2 = $max;	## border space fudge.
     my @border;	## up-left, up-right, down-left, down-right, left, right
     if ($0 =~ /think/i) {
 	$thoughts = 'o';
@@ -130,12 +146,12 @@ sub construct_balloon {
     }
     push(@balloon_lines, 
 	" " . ("_" x $max2) . " \n" ,
-	sprintf($format, $border[0], $message[0], $border[1]),
+    get_balloon_line($border[0], $message[0], $border[1], $max),
 	(@message < 2 ? "" : 
-	    map { sprintf($format, $border[4], $_, $border[5]) } 
+	    map { get_balloon_line($border[4], $_, $border[5], $max) } 
 		@message[1 .. $#message - 1]),
 	(@message < 2 ? "" : 
-	    sprintf($format, $border[2], $message[$#message], $border[3])),
+	    get_balloon_line($border[2], $message[$#message], $border[3], $max)),
         " " . ("-" x $max2) . " \n"
     );
 }
