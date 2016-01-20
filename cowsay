@@ -42,7 +42,7 @@ if (($^O eq "MSWin32") or ($^O eq "Windows_NT")) {  ## Many perls, eek!
     'f'     =>  'default.cow',
     'n'     =>  0,
     'T'     =>  '  ',
-    'W'     =>  40,
+    'W'     =>  60,
 );
 
 getopts('bde:f:ghlLnNpstT:wW:y', \%opts);
